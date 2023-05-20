@@ -1,0 +1,38 @@
+# Ignore WebStorm project files
+.idea/
+.iml/
+*.ipr
+*.iws
+
+# Ignore build output
+.out/
+.target/
+
+# Ignore temporary files
+*.swp
+*.class
+*.log
+*.pid
+*.jar
+*.war
+*.ear
+
+# Ignore IDE specific files
+*.db
+*.prefs
+*.session
+*.local.xml
+*.project.xml
+*.settings.xml
+
+# Ignore other files
+*.DS_Store
+*.Thumbs.db
+
+node_modules/
+.next/
+.swc/
+*.env
+*.env.local
+*.env.development
+*.env.production
