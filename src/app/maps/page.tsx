@@ -1,7 +1,7 @@
 export default function Maps() {
   return (
     <>
-      <h1>Hello Map</h1>
+      <h1>Hello Maps</h1>
     </>
   );
 }
