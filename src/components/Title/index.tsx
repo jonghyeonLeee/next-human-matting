@@ -4,9 +4,8 @@ interface Props {
   title: string;
 }
 
-const Title = (props: Props) => {
-  const { title } = props;
-  return <>{title}</>;
+const Title = ({ title }: Props) => {
+  return <h1>{title}</h1>;
 };
 
 export default memo(Title);
