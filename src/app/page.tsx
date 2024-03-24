@@ -73,27 +73,8 @@ export default function Home() {
           context !== null &&
           context !== undefined
         ) {
-          if (viewOption === 'recurrent1') {
-            drawHidden(r1o, canvasRef.current);
-          } else if (viewOption === 'recurrent2') {
-            drawHidden(r2o, canvasRef.current);
-          } else if (viewOption === 'recurrent3') {
-            drawHidden(r3o, canvasRef.current);
-          } else if (viewOption === 'recurrent4') {
-            drawHidden(r4o, canvasRef.current);
-          } else if (viewOption === 'white') {
-            drawMatte(fgr.clone(), pha.clone(), canvasRef.current);
-            context.fillStyle = 'rgb(255, 255, 255)';
-          } else if (viewOption === 'green') {
-            drawMatte(fgr.clone(), pha.clone(), canvasRef.current);
-            context.fillStyle = 'rgb(120, 255, 155)';
-            // canvasRef.current.style.background = 'rgb(120, 255, 155)';
-          } else if (viewOption === 'alpha') {
-            drawMatte(null, pha.clone(), canvasRef.current);
-            context.fillStyle = 'rgb(0, 0, 0)';
-          } else if (viewOption === 'foreground') {
-            drawMatte(fgr.clone(), null, canvasRef.current);
-          }
+          drawMatte(fgr.clone(), pha.clone(), canvasRef.current);
+          context.fillStyle = 'rgb(0, 0, 0)';
         }
 
         // Dispose of old tensors
@@ -133,52 +114,38 @@ export default function Home() {
           : tf.fill([fgrShape1, fgrShape2, 1], 255, 'int32');
       return tf.concat([rgb, a], -1);
     });
+
+    const ctx = canvas.getContext('2d');
+
+    if (ctx === null) {
+      rgba.dispose();
+      return;
+    }
+
+    // 배경 이미지의 imageData를 가져옴
+    const backgroundImageData = ctx.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+
     const [height, width] = rgba.shape.slice(0, 2);
     const pixelData = new Uint8ClampedArray(await rgba.data());
     const imageData = new ImageData(pixelData, width, height);
+
+    // 임시 canvas를 생성하여 ImageData를 그리고, 이를 메인 canvas에 그림
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    tempCanvas.getContext('2d')!.putImageData(imageData, 0, 0);
+
+    // 임시 canvas에서 메인 canvas로 이미지를 그림
+    ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+
     canvas.width = width;
     canvas.height = height;
     canvas.getContext('2d')!.putImageData(imageData, 0, 0);
-    rgba.dispose();
-  };
-
-  const drawHidden = async (
-    r: tf.Tensor,
-    canvas: HTMLCanvasElement,
-  ): Promise<void> => {
-    const rgba = tf.tidy(() => {
-      // Ensure r is unstacked into an array of tensors.
-      const layers: tf.Tensor[] = r.unstack(-1);
-      // After concatenation, we're still dealing with a tensor, not an array.
-      let imgTensor: tf.Tensor = tf.concat(layers, 1);
-      // Splitting the tensor along a dimension returns an array of tensors.
-      const splitLayers: tf.Tensor[] = imgTensor.split(4, 1);
-      // Concatenating these tensors returns a single tensor.
-      imgTensor = tf.concat(splitLayers, 2);
-      imgTensor = imgTensor
-        .squeeze([0])
-        .expandDims(-1)
-        .add(1)
-        .mul(127.5)
-        .cast('int32');
-      imgTensor = imgTensor.tile([1, 1, 3]);
-      const shape1 = imgTensor.shape[0];
-      const shpae2 = imgTensor.shape[1] ?? 0;
-      imgTensor = tf.concat(
-        [imgTensor, tf.fill([shape1, shpae2, 1], 255, 'int32')],
-        -1,
-      );
-      return imgTensor;
-    });
-    const [height, width] = rgba.shape.slice(0, 2);
-    const pixelData = new Uint8ClampedArray(await rgba.data());
-    const imageData = new ImageData(pixelData, width, height);
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.putImageData(imageData, 0, 0);
-    }
     rgba.dispose();
   };
 
@@ -190,20 +157,10 @@ export default function Home() {
 
   return (
     <div>
-      <Navigation />
+      {/*<Navigation />*/}
+      <h1>Jonghyeon Humanmatting TensorFlowjs test</h1>
 
       <button onClick={handleButtonClick}>Start</button>
-
-      <select onChange={(e) => setViewOption(e.target.value)}>
-        <option value="white">White Background</option>
-        <option value="green">Green Background</option>
-        <option value="alpha">Alpha</option>
-        <option value="foreground">Foreground</option>
-        <option value="recurrent1">Recurrent State 1</option>
-        <option value="recurrent2">Recurrent State 2</option>
-        <option value="recurrent3">Recurrent State 3</option>
-        <option value="recurrent4">Recurrent State 4</option>
-      </select>
       <br />
       <video ref={videoRef} style={{ width: 640, height: 480 }}></video>
       <canvas ref={canvasRef}></canvas>
